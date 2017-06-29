@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 import java.util.List;
 
+import meleshko.com.videoscroll.items.BaseVideoItem;
+
 public class VideoRecyclerViewAdapter extends RecyclerView.Adapter<VideoViewHolder> {
 
     private final VideoPlayerManager mVideoPlayerManager;
