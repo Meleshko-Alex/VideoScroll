@@ -7,7 +7,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.widget.AbsListView;
 
-import com.volokh.danylo.video_player_manager.Config;
 import com.volokh.danylo.video_player_manager.manager.PlayerItemChangeListener;
 import com.volokh.danylo.video_player_manager.manager.SingleVideoPlayerManager;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
@@ -25,10 +24,8 @@ import meleshko.com.videoscroll.items.BaseVideoItem;
 import meleshko.com.videoscroll.items.ItemFactory;
 
 public class MainActivity extends AppCompatActivity {
-    private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
-    private static final String TAG = MainActivity.class.getSimpleName();
 
-    private final ArrayList<BaseVideoItem> mList = new ArrayList<>();
+    private ArrayList<BaseVideoItem> mList = new ArrayList<>();
 
     /**
      * Only the one (most visible) view should be active (and playing).
@@ -58,6 +55,19 @@ public class MainActivity extends AppCompatActivity {
 
     private int mScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
 
+    // The minimum amount of items to have below your current scroll position
+    // before loading more.
+    private int visibleThreshold = 5;
+    // The current offset index of data you have loaded
+    private int currentPage = 0;
+    // The total number of items in the dataset after the last load
+    private int previousTotalItemCount = 0;
+    // True if we are still waiting for the last set of data to load.
+    private boolean loading = true;
+    // Sets the starting page index
+    private int startingPageIndex = 0;
+
+    private VideoRecyclerViewAdapter videoRecyclerViewAdapter;
 
 
     @Override
@@ -66,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         try {
-            mList.add(ItemFactory.createItemFromAsset("video_sample_1.mp4", R.mipmap.ic_launcher, this, mVideoPlayerManager));
+            mList.add(ItemFactory.createItemFromAsset("video_sample_2.mp4", R.mipmap.ic_launcher, this, mVideoPlayerManager));
            /* mList.add(ItemFactory.createItemFromAsset("video_sample_2.mp4", R.mipmap.ic_launcher, this, mVideoPlayerManager));
             mList.add(ItemFactory.createItemFromAsset("video_sample_1.mp4", R.mipmap.ic_launcher, this, mVideoPlayerManager));
             mList.add(ItemFactory.createItemFromAsset("video_sample_2.mp4", R.mipmap.ic_launcher, this, mVideoPlayerManager));
@@ -95,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        VideoRecyclerViewAdapter videoRecyclerViewAdapter = new VideoRecyclerViewAdapter(mVideoPlayerManager, this, mList);
+        videoRecyclerViewAdapter = new VideoRecyclerViewAdapter(mVideoPlayerManager, this, mList);
 
         mRecyclerView.setAdapter(videoRecyclerViewAdapter);
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -120,6 +130,38 @@ public class MainActivity extends AppCompatActivity {
                             mLayoutManager.findFirstVisibleItemPosition(),
                             mLayoutManager.findLastVisibleItemPosition() - mLayoutManager.findFirstVisibleItemPosition() + 1,
                             mScrollState);
+                }
+
+                int lastVisibleItemPosition = 0;
+                int totalItemCount = mLayoutManager.getItemCount();
+
+                lastVisibleItemPosition = mLayoutManager.findLastVisibleItemPosition();
+
+                // If the total item count is zero and the previous isn't, assume the
+                // list is invalidated and should be reset back to initial state
+                if (totalItemCount < previousTotalItemCount) {
+                    currentPage = startingPageIndex;
+                    previousTotalItemCount = totalItemCount;
+                    if (totalItemCount == 0) {
+                        loading = true;
+                    }
+                }
+                // If it’s still loading, we check to see if the dataset count has
+                // changed, if so we conclude it has finished loading and update the current page
+                // number and total item count.
+                if (loading && (totalItemCount > previousTotalItemCount)) {
+                    loading = false;
+                    previousTotalItemCount = totalItemCount;
+                }
+
+                // If it isn’t currently loading, we check to see if we have breached
+                // the visibleThreshold and need to reload more data.
+                // If we do need to reload some more data, we execute onLoadMore to fetch the data.
+                // threshold should reflect how many total columns there are too
+                if (!loading && (lastVisibleItemPosition + visibleThreshold) > totalItemCount) {
+                    currentPage++;
+                    onLoadMore(currentPage, totalItemCount, recyclerView);
+                    loading = true;
                 }
             }
         });
@@ -152,5 +194,44 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         // we have to stop any playback in onStop
         mVideoPlayerManager.resetMediaPlayer();
+    }
+
+    public int getLastVisibleItem(int[] lastVisibleItemPositions) {
+        int maxSize = 0;
+        for (int i = 0; i < lastVisibleItemPositions.length; i++) {
+            if (i == 0) {
+                maxSize = lastVisibleItemPositions[i];
+            }
+            else if (lastVisibleItemPositions[i] > maxSize) {
+                maxSize = lastVisibleItemPositions[i];
+            }
+        }
+        return maxSize;
+    }
+
+    public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
+        ArrayList<BaseVideoItem> newList = createContactsList(10, page);
+        final int curSize = videoRecyclerViewAdapter.getItemCount();
+        mList.addAll(newList);
+
+        view.post(new Runnable() {
+            @Override
+            public void run() {
+                videoRecyclerViewAdapter.notifyItemRangeInserted(curSize, mList.size() - 1);
+            }
+        });
+    }
+
+    public  ArrayList<BaseVideoItem> createContactsList(int numContacts, int offset) {
+        ArrayList<BaseVideoItem> mList = new ArrayList<>();
+
+        for (int i = 1; i <= numContacts; i++) {
+            try {
+                mList.add(ItemFactory.createItemFromAsset("video_sample_2.mp4", R.mipmap.ic_launcher, this, mVideoPlayerManager));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return mList;
     }
 }

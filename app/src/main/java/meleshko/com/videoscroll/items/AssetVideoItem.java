@@ -23,6 +23,7 @@ public class AssetVideoItem extends BaseVideoItem{
 
     private final Picasso mImageLoader;
     private final int mImageResource;
+
     Uri uri=Uri.parse("https://tbdev-storage.s3.amazonaws.com/van-damme.mp4");
     String link=uri.toString();
 
@@ -45,7 +46,7 @@ public class AssetVideoItem extends BaseVideoItem{
 
     @Override
     public void playNewVideo(MetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<MetaData> videoPlayerManager) {
-        videoPlayerManager.playNewVideo(currentItemMetaData, player, link);
+        videoPlayerManager.playNewVideo(currentItemMetaData, player, mAssetFileDescriptor);
     }
 
     @Override
