@@ -1,6 +1,7 @@
 package meleshko.com.videoscroll.items;
 
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,9 +10,9 @@ import com.volokh.danylo.video_player_manager.manager.VideoItem;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
 import com.volokh.danylo.video_player_manager.meta.MetaData;
-import com.volokh.danylo.visibility_utils.items.ListItem;
-import com.volokh.danylo.video_player_manager.utils.Logger;
 import com.volokh.danylo.video_player_manager.ui.MediaPlayerWrapper;
+import com.volokh.danylo.video_player_manager.utils.Logger;
+import com.volokh.danylo.visibility_utils.items.ListItem;
 
 import meleshko.com.videoscroll.R;
 import meleshko.com.videoscroll.VideoViewHolder;
@@ -72,10 +73,12 @@ public abstract class BaseVideoItem implements VideoItem, ListItem{
             public void onVideoPreparedMainThread() {
                 // When video is prepared it's about to start playback. So we hide the cover
                 videoViewHolder.mCover.setVisibility(View.INVISIBLE);
+                Log.i("QQQQ", "onVideoPreparedMainThread");
             }
 
             @Override
             public void onVideoCompletionMainThread() {
+                Log.i("QQQQ", "onVideoCompletionMainThread");
             }
 
             @Override
@@ -84,12 +87,16 @@ public abstract class BaseVideoItem implements VideoItem, ListItem{
 
             @Override
             public void onBufferingUpdateMainThread(int percent) {
+                Log.i("QQQQ", "onBufferingUpdateMainThread");
             }
 
             @Override
             public void onVideoStoppedMainThread() {
+                Log.i("QQQQ", "onVideoStoppedMainThread");
                 // Show the cover when video stopped
                 videoViewHolder.mCover.setVisibility(View.VISIBLE);
+                videoViewHolder.mPause.setVisibility(View.GONE);
+                videoViewHolder.mPlay.setVisibility(View.GONE);
             }
         });
         return view;

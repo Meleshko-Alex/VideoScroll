@@ -69,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
 
     private VideoRecyclerViewAdapter videoRecyclerViewAdapter;
 
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
